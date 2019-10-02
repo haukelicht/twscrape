@@ -1,8 +1,8 @@
 #' Get Twitter API request limits
 #'
 #' @param query query string (e.g., 'statuses/user_timeline')
-#' @param token an Twitter OAuth \code{{rtweet}}'s 'Token' object.
-#'     Defaults to \code{{rtweet}}'s \link[rtweet]{get_token}
+#' @param token an Twitter OAuth \code{rtweet}'s 'Token' object.
+#'     Defaults to \code{rtweet}'s \link[rtweet]{get_token}
 #'
 #' @return Integer value giving the number of remaining available request for a given query.
 #'     (Vector is named by query in order to allow for name-based indexing)
@@ -10,34 +10,34 @@
 #' @importFrom purrr map
 #' @importFrom rtweet get_token rate_limit
 #' @importFrom utils tail
-#'  
+#'
 #' @export
 get_api_request_limits <- function(
   query
   , token = rtweet::get_token()
 ) {
-  
-  if(!inherits(token, "Token")) 
+
+  if(!inherits(token, "Token"))
     stop("`token' is not a valid {rtweet} Twitter OAuth token (see ?rtweet::get_token)")
-  
+
   limits <- rtweet::rate_limit(token = token)
-  
+
   req_lim <- apply(limits[grep(query, limits$query), c("query", "remaining", "reset_at")], 1, as.list)
-  
+
   names(req_lim) <- purrr::map(req_lim, "query")
-  
+
   req_lim <- purrr::map(req_lim, utils::tail, -1)
-  
+
   return(req_lim)
 }
 
 #' Get all tweets
 #'
 #' @description Function gets all statuses by ID
-#' 
+#'
 #' @param status.ids vector of twitter status IDs
 #' @param batch.size Number of statuses to request per iteration.
-#'      Passed to \code{{rtweet}}'s \link[rtweet]{lookup_statuses} .
+#'      Passed to \code{rtweet}'s \link[rtweet]{lookup_statuses} .
 #'      Defaults to 90000 (the maximum value).
 #' @param order.ids logical. Order IDs in ascending order?
 #'      Defaults to \code{TRUE}
@@ -55,32 +55,32 @@ get_all_tweets <- function(
   , order.ids = TRUE
   , verbose = TRUE
 ){
-  
+
   if (!verbose){
     message <- function(...) NULL
     on.exit(message <- base::message)
   }
-  
+
   if (batch.size < 0L | batch.size > 90000L)
     stop("`batch.size' must be a positive integer in {1, ..., 90000}.")
-  
+
   # split into correctly sized chunks in order to not hit request limits
   if (order.ids)
     status.ids <- status.ids[order(status.ids)]
-  
+
   status_ids_list <- split(status.ids, (seq_along(status.ids) %/% batch.size))
   l <- length(status_ids_list)
-  
+
   # output container
   out <- list()
   # iter index
   i <- 1L
-  
+
   query <- "statuses/lookup"
-  
+
   # request statuses in batches
   while(TRUE){
-    
+
     out[[i]] <- tryCatch(
       rtweet::lookup_statuses(
         status_ids_list[[i]]
@@ -89,14 +89,14 @@ get_all_tweets <- function(
       , error = function(err) err
       , warning = function(wrn) wrn
     )
-    
+
     if (inherits(out[[i]], "warning")) {
-      
+
       if ((req_lim <- get_api_request_limits(query)[[query]])$remaining <= 470L){
         message("Waiting for request limit to reset at ", req_lim$reset_at)
-        wait_until(req_lim$reset_at, pause.secs = 30) 
+        wait_until(req_lim$reset_at, pause.secs = 30)
       }
-      
+
       out[[i]] <- tryCatch(
         rtweet::lookup_statuses(
           status_ids_list[[i]]
@@ -105,7 +105,7 @@ get_all_tweets <- function(
         , error = function(err) err
       )
     }
-    
+
     if (inherits(out[[i]], "error")){
       warning(
         "Failed getting statuses for indexes "
@@ -116,14 +116,14 @@ get_all_tweets <- function(
           , ""
         )
         , ifelse(
-          l > i 
+          l > i
           , ". Continuing with next batch."
           , ". Stopping, as no further batch is waiting"
         )
       )
-      
+
     } else {
-      
+
       if (nrow(out[[i]]) != length(status_ids_list[[i]])){
         warning(
           "Number of requested statuses (`status.ids`) and number of rows in list returned from API differ in length "
@@ -131,12 +131,12 @@ get_all_tweets <- function(
           , " Adding missing rows to output data frame."
         )
       }
-      
+
       if (nrow(out[[i]]) > 0L){
-        out[[i]] <- tibble::enframe(status_ids_list[[i]], name = NULL) %>% 
-          rename(status_id = value) %>% 
-          mutate(request_status = "requested") %>% 
-          full_join(out[[i]], by = "status_id") %>% 
+        out[[i]] <- tibble::enframe(status_ids_list[[i]], name = NULL) %>%
+          rename(status_id = value) %>%
+          mutate(request_status = "requested") %>%
+          full_join(out[[i]], by = "status_id") %>%
           mutate(
             request_status = case_when(
               is.na(user.id) ~ "requested and NOT returned"
@@ -148,38 +148,38 @@ get_all_tweets <- function(
         out[[i]] <- tibble()
       }
     }
-    
+
     if (i == l) {
       # break while loop if new more batches waiting
-      break 
-    } else { 
+      break
+    } else {
       i <- i + 1L
       next
     }
   }
-  
+
   # row-bind all data frames
   tweets <- do.call(rbind, out)
-  
+
   # report
   message(
     "Got ", nrow(tweets), " tweets in ", l, ifelse(l == 1, " batch.", "batches.")
     , " Time range: ", paste(range(as.Date.character(tweets$created_at)), collapse = " to ")
   )
-  
+
   # return
   return(tweets)
 }
 
-#' Get \code{{rtweet}}'s status-lookup columns
-#' 
-#' @description Function returns column names of fields in twitter object returned 
-#'     on Twitter API call via the \code{{rtweet}}'s \link[rtweet]{lookup_statuses} 
-#'     
+#' Get \code{rtweet}'s status-lookup columns
+#'
+#' @description Function returns column names of fields in twitter object returned
+#'     on Twitter API call via the \code{rtweet}'s \link[rtweet]{lookup_statuses}
+#'
 #' @param status column names of main status info (status ID and text, created time)
 #' @param user column names of main user info (user ID, screen name and name, and account created time)
 #' @param status.plus column names of status meta info
-#' @param status.engagements column names of status engagement count fields (No. favorites, retweets, quotes, replies) 
+#' @param status.engagements column names of status engagement count fields (No. favorites, retweets, quotes, replies)
 #' @param status.entities column names of status entities objects
 #' @param status.entities.hashtags column names of status hashtags object
 #' @param status.entities.symbols column names of status symbols object
@@ -199,16 +199,16 @@ get_all_tweets <- function(
 #' @param user.engagements column names of user engagement fields
 #' @param user.profile column names of user profile-related fields
 #' @param user.misc user column names of miscalaneus user info fields
-#' 
-#' @return  a character vector of column names compatible with the column names of 
-#'     the data frame obejct returned by valid calls to \code{{rtweet}}'s \link[rtweet]{lookup_statuses}  
-#'     
+#'
+#' @return  a character vector of column names compatible with the column names of
+#'     the data frame obejct returned by valid calls to \code{rtweet}'s \link[rtweet]{lookup_statuses}
+#'
 tw_status_cols <- function(
   # main status info (ID, create time, text)
   status = TRUE
   # main user info (ID, screen name, name, account created time)
   , user = TRUE
-  # Additional status info 
+  # Additional status info
   # status meta info (URL, source, display width)
   , status.plus = status
   # status enagements info (No. likes, retweets, quotes, and replies)
@@ -235,47 +235,47 @@ tw_status_cols <- function(
   , status.location.place = status.location
   # status.location.coords
   , status.location.coords = status.location
-  # Additional user info 
+  # Additional user info
   , user.bio = user
   , user.engagements = user
   , user.profile = user
   , user.misc = user
 ){
-  
+
   cols <- character()
-  
-  if (user) 
+
+  if (user)
     cols <- c(
       cols
       , c(
-        "user_id" # (chr) := ID of the user posting the tweet status 
-        , "screen_name" # (chr) := screen name of the user posting the tweet status 
-        , "name" # (chr) := full name of the user posting the tweet status 
-        , "account_created_at" # (dttm) := datetime when user account was created  
+        "user_id" # (chr) := ID of the user posting the tweet status
+        , "screen_name" # (chr) := screen name of the user posting the tweet status
+        , "name" # (chr) := full name of the user posting the tweet status
+        , "account_created_at" # (dttm) := datetime when user account was created
       )
     )
-  
-  if (status) 
+
+  if (status)
     cols <- c(
       cols
       , c(
-        "status_id" # (chr) := ID of the status post 
+        "status_id" # (chr) := ID of the status post
         , "created_at" # (dttm) := UTC time when status was posted
-        , "text" # (chr) := full status text 
+        , "text" # (chr) := full status text
       )
     )
-  
+
   if (status && status.plus)
     cols <- c(
       cols
       , c(
         "lang" # (chr) := status language
-        , "status_url" # (chr) := URL of the status post 
+        , "status_url" # (chr) := URL of the status post
         , "source" # (chr) := utility used to post the status (text from HTML-formatted a-tag string)
-        , "display_text_width" # (dbl) := unicode code point index identifying the exclusive end of the displayable content of the tweet 
+        , "display_text_width" # (dbl) := unicode code point index identifying the exclusive end of the displayable content of the tweet
       )
     )
-  
+
   if (status && status.engagements)
     cols <- c(
       cols
@@ -286,24 +286,24 @@ tw_status_cols <- function(
         , "reply_count" # (int) := number of replies to this status
       )
     )
-  
-  if (status && status.entities && status.entities.hashtags) 
+
+  if (status && status.entities && status.entities.hashtags)
     cols <- c(
       cols
       , c(
         "hashtags" # (list of chrs) := names of hashtags used in this status (minus the leading '#' characters)
       )
     )
-  
-  if (status && status.entities && status.entities.symbols) 
+
+  if (status && status.entities && status.entities.symbols)
     cols <- c(
       cols
       , c(
         "symbols" # (list of chrs) := names of cashtags used in this status (minus the leading '$' characters)
       )
     )
-  
-  if (status && status.entities && status.entities.urls) 
+
+  if (status && status.entities && status.entities.urls)
     cols <- c(
       cols
       , c(
@@ -312,8 +312,8 @@ tw_status_cols <- function(
         , "urls_expanded_url" # (list of chrs) := expanded version of URL pasted/typed into status (i.e., `urls_url`)
       )
     )
-  
-  if (status && status.entities && status.entities.media) 
+
+  if (status && status.entities && status.entities.media)
     cols <- c(
       cols
       , c(
@@ -327,8 +327,8 @@ tw_status_cols <- function(
         , "ext_media_type" # (chr) := media type in {'photo', 'video', 'animated_gif'}
       )
     )
-  
-  if (status && status.reply) 
+
+  if (status && status.reply)
     cols <- c(
       cols
       , c(
@@ -337,8 +337,8 @@ tw_status_cols <- function(
         , "reply_to_screen_name" # (chr) := screen name of the user that posted a target status the current status post replies to (`NA` if current status not a reply)
       )
     )
-  
-  if (status && status.quote) 
+
+  if (status && status.quote)
     cols <- c(
       cols
       , c(
@@ -349,8 +349,8 @@ tw_status_cols <- function(
         , "quoted_created_at" # (dttm) :=
       )
     )
-  
-  if (status && status.quote && status.quote.status) 
+
+  if (status && status.quote && status.quote.status)
     cols <- c(
       cols
       , c(
@@ -359,8 +359,8 @@ tw_status_cols <- function(
         , "quoted_retweet_count" # (int) :=
       )
     )
-  
-  if (status && status.quote && status.quote.user) 
+
+  if (status && status.quote && status.quote.user)
     cols <- c(
       cols
       , c(
@@ -374,8 +374,8 @@ tw_status_cols <- function(
         , "quoted_verified" # (lgl) :=
       )
     )
-  
-  if (status && status.retweet) 
+
+  if (status && status.retweet)
     cols <- c(
       cols
       , c(
@@ -386,8 +386,8 @@ tw_status_cols <- function(
         , "retweet_created_at" # (dttm) :=
       )
     )
-  
-  if (status && status.retweet && status.retweet.status) 
+
+  if (status && status.retweet && status.retweet.status)
     cols <- c(
       cols
       , c(
@@ -396,8 +396,8 @@ tw_status_cols <- function(
         , "retweet_retweet_count" # (int) :=
       )
     )
-  
-  if (status && status.retweet && status.retweet.user) 
+
+  if (status && status.retweet && status.retweet.user)
     cols <- c(
       cols
       , c(
@@ -411,8 +411,8 @@ tw_status_cols <- function(
         , "retweet_verified" # (lgl) :=
       )
     )
-  
-  if (status && status.location && status.location.place) 
+
+  if (status && status.location && status.location.place)
     cols <- c(
       cols
       , c(
@@ -425,8 +425,8 @@ tw_status_cols <- function(
         , "bbox_coords" # (list) := eight coordinates (2 long, lat tuples per corner) defining a box which will contain the `place` this bounding box is related to
       )
     )
-  
-  if (status && status.location && status.location.coords) 
+
+  if (status && status.location && status.location.coords)
     cols <- c(
       cols
       , c(
@@ -434,8 +434,8 @@ tw_status_cols <- function(
         , "coords_coords" # (list) := longitude, latitude tuple of the status' exact location (if available)
       )
     )
-  
-  if (user && user.bio) 
+
+  if (user && user.bio)
     cols <- c(
       cols
       , c(
@@ -444,8 +444,8 @@ tw_status_cols <- function(
         , "url" # (chr) := URL provided by the user in association with their profile
       )
     )
-  
-  if (user && user.engagements) 
+
+  if (user && user.engagements)
     cols <- c(
       cols
       , c(
@@ -456,8 +456,8 @@ tw_status_cols <- function(
         , "favourites_count" # (int) := number of tweets this user has liked in the account's lifetime
       )
     )
-  
-  if (user && user.profile) 
+
+  if (user && user.profile)
     cols <- c(
       cols
       , c(
@@ -465,39 +465,39 @@ tw_status_cols <- function(
         , "profile_expanded_url" # (chr) := expanded URL provided by the user in association with their profile
         , "profile_image_url" # (chr) := HTTPS-based URL pointing to the user's profile image (WARNING: deprecated, use `profile_image_url_https` instead)
         , "profile_banner_url" # (chr) := HTTPS-based URL pointing to the standard web representation of the user's uploaded profile banner
-        , "profile_background_url" # (chr) := 
+        , "profile_background_url" # (chr) :=
       )
     )
-  
-  if (user && user.misc) 
+
+  if (user && user.misc)
     cols <- c(
       cols
       , c(
-        "protected" # (lgl) := boolean whether or not this user has chosen to protect their tweets 
+        "protected" # (lgl) := boolean whether or not this user has chosen to protect their tweets
         , "verified" # (lgl) := boolean indicates whether or not this is a verified user account
         , "account_lang" # (lgl) := user-defined account language
       )
     )
-  
+
   return(cols)
 }
 
 #' Read tweets data from disk
-#' 
-#' @description Given a vector of file paths, function returns a (row-stacked) 
-#'     data frame object of the contained tweets data   
-#' 
-#' @details The files to be read need to be tweet data frame as returned by \code{{rtweet}}'s \link[rtweet]{lookup_statuses}.
+#'
+#' @description Given a vector of file paths, function returns a (row-stacked)
+#'     data frame object of the contained tweets data
+#'
+#' @details The files to be read need to be tweet data frame as returned by \code{rtweet}'s \link[rtweet]{lookup_statuses}.
 #'     The file format needs to be readable by the reader function passed to parameter \code{read.fun}.
-#'             
+#'
 #' @param paths character vector specifiying the paths to twitter data files
 #' @param fields names of columns (fields) to be extracted and row-binded in output data frame
 #' @param read.fun reader function (needs to be compatible with formats of files passed to \code{paths})
-#'  
+#'
 #' @importFrom tibble tibble
 #' @importFrom purrr map map_dfr
-#'  
-#' @return A \link[tibble]{tibble} data frame with columns as specified by argument \code{fields} 
+#'
+#' @return A \link[tibble]{tibble} data frame with columns as specified by argument \code{fields}
 #' @export
 read_tweets_data <- function(
   paths
@@ -513,19 +513,19 @@ read_tweets_data <- function(
 ) {
   if (length(paths) == 0L)
     return(tibble::tibble())
-  
+
   if (is.recursive(paths))
     paths <- unlist(paths)
-  
+
   these_paths <- paths[path_exists <- file.exists(paths)]
-  
+
   if (any(!path_exists)) {
-    sprintf("File on path %s does no exist and is omitted in data read.", paths[!path_exists]) %>% 
+    sprintf("File on path %s does no exist and is omitted in data read.", paths[!path_exists]) %>%
       purrr::map(warning, call. = FALSE)
   }
-  
+
   idx <- which(fields %in% tw_status_cols(status = TRUE, user = TRUE))
-  
+
   if (length(fields[-idx]) > 0L) {
     warning(
       paste(
@@ -535,9 +535,9 @@ read_tweets_data <- function(
       , call. = FALSE
     )
   }
-  
+
   out <- purrr::map_dfr(these_paths, function(path, .fields = fields[idx], .rf = read.fun) {.rf(path)[, .fields]})
-  
+
   return(unique(out))
 }
 

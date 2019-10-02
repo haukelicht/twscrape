@@ -2,6 +2,7 @@
 
 export(get_all_tweets)
 export(get_api_request_limits)
+export(get_running_dockers)
 export(read_tweets_data)
 import(dplyr)
 importFrom(purrr,map)

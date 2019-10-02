@@ -2,7 +2,7 @@
 % Please edit documentation in R/rtweet_extensions.R
 \name{tw_status_cols}
 \alias{tw_status_cols}
-\title{Get \code{{rtweet}}'s status-lookup columns}
+\title{Get \code{rtweet}'s status-lookup columns}
 \usage{
 tw_status_cols(status = TRUE, user = TRUE, status.plus = status,
   status.engagements = status, status.entities = status,
@@ -66,10 +66,10 @@ tw_status_cols(status = TRUE, user = TRUE, status.plus = status,
 \item{user.misc}{user column names of miscalaneus user info fields}
 }
 \value{
-a character vector of column names compatible with the column names of 
-    the data frame obejct returned by valid calls to \code{{rtweet}}'s \link[rtweet]{lookup_statuses}
+a character vector of column names compatible with the column names of
+    the data frame obejct returned by valid calls to \code{rtweet}'s \link[rtweet]{lookup_statuses}
 }
 \description{
-Function returns column names of fields in twitter object returned 
-    on Twitter API call via the \code{{rtweet}}'s \link[rtweet]{lookup_statuses}
+Function returns column names of fields in twitter object returned
+    on Twitter API call via the \code{rtweet}'s \link[rtweet]{lookup_statuses}
 }

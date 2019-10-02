@@ -11,7 +11,7 @@ get_all_tweets(status.ids, batch.size = 90000L, order.ids = TRUE,
 \item{status.ids}{vector of twitter status IDs}
 
 \item{batch.size}{Number of statuses to request per iteration.
-Passed to \code{{rtweet}}'s \link[rtweet]{lookup_statuses} .
+Passed to \code{rtweet}'s \link[rtweet]{lookup_statuses} .
 Defaults to 90000 (the maximum value).}
 
 \item{order.ids}{logical. Order IDs in ascending order?

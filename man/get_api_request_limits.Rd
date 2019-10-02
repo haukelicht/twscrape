@@ -9,8 +9,8 @@ get_api_request_limits(query, token = rtweet::get_token())
 \arguments{
 \item{query}{query string (e.g., 'statuses/user_timeline')}
 
-\item{token}{an Twitter OAuth \code{{rtweet}}'s 'Token' object.
-Defaults to \code{{rtweet}}'s \link[rtweet]{get_token}}
+\item{token}{an Twitter OAuth \code{rtweet}'s 'Token' object.
+Defaults to \code{rtweet}'s \link[rtweet]{get_token}}
 }
 \value{
 Integer value giving the number of remaining available request for a given query.

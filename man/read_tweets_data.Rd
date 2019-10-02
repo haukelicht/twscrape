@@ -19,10 +19,10 @@ read_tweets_data(paths, fields = tw_status_cols(status.location = FALSE,
 A \link[tibble]{tibble} data frame with columns as specified by argument \code{fields}
 }
 \description{
-Given a vector of file paths, function returns a (row-stacked) 
+Given a vector of file paths, function returns a (row-stacked)
     data frame object of the contained tweets data
 }
 \details{
-The files to be read need to be tweet data frame as returned by \code{{rtweet}}'s \link[rtweet]{lookup_statuses}.
+The files to be read need to be tweet data frame as returned by \code{rtweet}'s \link[rtweet]{lookup_statuses}.
     The file format needs to be readable by the reader function passed to parameter \code{read.fun}.
 }
