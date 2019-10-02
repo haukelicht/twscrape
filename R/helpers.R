@@ -56,3 +56,148 @@ get_running_dockers <- function(format.string = "table {{.Names}},{{.Image}},{{.
   stat <- do.call(rbind, strsplit(docker_stat, ","))
   setNames(as.data.frame(stat)[-1, ], gsub("\\s+", "_", tolower(stat[1, ])))
 }
+
+#' Validate dates
+#'
+#' @description  Function validates format of dates
+#'     throws warning if a given value has not the required date format
+#'     or cannot be converted to a valid date
+#'
+#' @param ... a comma-separated list of presumable date values
+#'
+#' @param .format an ISO date fromat to be validated
+#'     Default is '\%Y-\%m-\%d'.
+#'
+#' @return A list, one element for each element passed to \code{...}.
+#'     Elements NA when
+#'
+#' @importFrom stringr str_replace_all
+#' @importFrom lubridate is.Date
+#' @examples
+#' \dontrun{
+#' validate_dates(1234, Sys.Date(), "2019-02-30")
+#' }
+validate_dates <- function(..., .format = "%Y-%m-%d") {
+
+  regex_ <- stringr::str_replace_all(
+    .format
+    , c(
+      "%Y" = "\\\\d{4}"
+      , "%y" = "\\\\d{2}"
+      , "%m"  = "\\\\d{2}"
+      , "%d"  = "\\\\d{2}"
+    )
+  )
+
+  has_ymd_format <- function(string, format = regex_) {
+    nchar(gsub(paste0("^", format, "$"), "", string)) == 0L
+  }
+
+  inl <- list(...)
+
+  lapply(inl, function(e = "2019-02-30") {
+
+    if (!(lubridate::is.Date(e) || (is.character(e) & has_ymd_format(e))))
+      warning("Problem with input value '", e, "'. (Has not the correct date format/is not a date.)", call. = FALSE)
+
+    e_ <- tryCatch(as.Date(e), error = function(err) err)
+
+    if (inherits(e_, "error")){
+      warning("Problem with input value '", e, "'. (Cannot be converted to a valid date.)", call. = FALSE)
+      return(NA)
+    }
+
+    return(format(e_, .format))
+  })
+}
+
+
+#' Get required date ranges to be requested
+#'
+#' Function takes a vector of dates, a start and end date, and returns a list of adjacent date sequences that are \bold{not} covered by the vector of dates.
+#'
+#' This function is an internal helper. All dates need to be in \code{YYYY-mm-dd} ('\%Y-\%m-\%d') format.
+#'
+#' @param .dates a vector of dates or \code{NULL}, defining the (start and/or end)
+#'     dates taken as given.
+#'     Alternatively, \code{.dates} can be a vector of integer values that will be converted
+#'     to dates using \code{\link[lubridate]{as_date}}
+#'     (hence, \code{\link[lubridate]{origin}}, that is, '1970-01-01 UTC' will be used as origin date).
+#'
+#' @param .since a date (format '\%Y-\%m-\%d'), specifying the start of the date range to be requested
+#'
+#' @param .until a date (format '\%Y-\%m-\%d'), specifying the end of the date range to be requested
+#'
+#' @return Either of the following two
+#' \enumerate{
+#'    \item A list of date range start and end dates in the date range spaned from \code{.since} to \code{.until}
+#'        that is \bold{not} covered by dates in \code{.dates}.
+#'    \item \code{NULL} if length of \code{dates} is zero,
+#'        or the requested time range is convered by the date range spaned from \code{.since} to \code{.until}.
+#' }
+#'
+#'
+#' @importFrom lubridate ymd as_date
+#' @importFrom purrr set_names
+#'
+#' @examples
+#' dates <- seq(Sys.Date()-30, Sys.Date()-5, by = "day")
+#' since <- Sys.Date() -35
+#' until <- Sys.Date()
+#'
+#' # returns list with one date range vector (spanning since - until)
+#' twscrape:::get_required_date_ranges(NULL, since, until)
+#'
+#' # returns list with two date range vectors
+#' twscrape:::get_required_date_ranges(Sys.Date()-1, since, until)
+#'
+#' # returns list with two date range vectors
+#' twscrape:::get_required_date_ranges(dates, since, until)
+get_required_date_ranges <- function(.dates, .since, .until) {
+
+  if (length(.dates) == 0L)
+    return(list(c(s = lubridate::ymd(.since), e = lubridate::ymd(.until))))
+
+
+  ranges <- list()
+
+  if (length(.dates) == 1L) {
+    ranges[[1]] <- list(s = .dates, e = .dates)
+  } else {
+    for(d in 1:(length(.dates)-1L)) {
+      ranges[[d]] <- list(s = .dates[d], e = .dates[d+1L])
+    }
+  }
+
+  if (is.numeric(.since))
+    .since <- lubridate::as_date(.since)
+
+  if (is.numeric(.until))
+    .until <- lubridate::as_date(.until)
+
+
+  req_date_range <- seq.Date(lubridate::ymd(.since), lubridate::ymd(.until), by = "day")
+
+  for (r in seq_along(ranges)){
+    req_date_range <- lubridate::as_date(
+      setdiff(
+        req_date_range
+        , seq.Date(
+          lubridate::as_date(ranges[[r]]$s)
+          , lubridate::as_date(ranges[[r]]$e)
+          , by = "day"
+        )
+      )
+    )
+  }
+
+  if (length(req_date_range) == 0L){
+    warning("sequence of days between `since` and `until` are covered by ranges spanned by dates in `dates`. Returning NULL")
+    return(NULL)
+  }
+
+  diffs <- c(1L, req_date_range[-1] - req_date_range[-length(req_date_range)])
+
+  unname(lapply(lapply(split(req_date_range, cumsum(diffs != 1L)), range), purrr::set_names, c("s", "e")))
+}
+

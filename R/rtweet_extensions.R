@@ -2,7 +2,7 @@
 #'
 #' @param query query string (e.g., 'statuses/user_timeline')
 #' @param token an Twitter OAuth \code{rtweet}'s 'Token' object.
-#'     Defaults to \code{rtweet}'s \link[rtweet]{get_token}
+#'     Defaults to \code{rtweet}'s \code{get_token}
 #'
 #' @return Integer value giving the number of remaining available request for a given query.
 #'     (Vector is named by query in order to allow for name-based indexing)

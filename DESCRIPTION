@@ -15,4 +15,11 @@ Imports:
     tibble,
     dplyr,
     rtweet,
-    purrr
+    purrr,
+    RSelenium,
+    jsonlite,
+    lubridate,
+    tidyr,
+    stringr,
+    xml2,
+    rvest
