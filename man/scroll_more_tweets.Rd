@@ -26,3 +26,8 @@ Function takes remote driver currently at a Twitter users' stream,
      It then extracts all tweet IDs from the HTML source (tag 'div.tweet', attribute 'data-item-id'),
      and returns them as a character vector.
 }
+\section{WARNING}{
+
+    Function presuposses an active remote Selenium driver.
+}
+

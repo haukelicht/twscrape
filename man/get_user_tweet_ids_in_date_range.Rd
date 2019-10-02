@@ -45,3 +45,11 @@ Used both for looking for existing tweet ID JSON files, and to name new ones whe
 Given a start and end date, function looks for tweet ID files already to disk
    and gets tweet IDs for the remaining date range(s) by calling \link{scrape_tweets}.
 }
+\section{WARNING}{
+
+\itemize{
+    \item Function presuposses an active remote Selenium driver.     
+    \item Function only accepts dates in format '\%Y-\%m-\%d' (Year-month-day: 'YYYY-mm-dd')     
+}
+}
+

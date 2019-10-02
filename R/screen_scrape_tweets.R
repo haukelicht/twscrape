@@ -6,6 +6,9 @@
 #'      It then extracts all tweet IDs from the HTML source (tag 'div.tweet', attribute 'data-item-id'),
 #'      and returns them as a character vector.
 #'
+#' @section WARNING:
+#'     Function presuposses an active remote Selenium driver.
+#' 
 #' @param account Twitter screen name or account ID
 #' @param remdr an \bold{active} RSelenium \code{\link[RSelenium]{remoteDriver}} object 
 #'     (check \code{remdr$getStatus()} to see if the driver is running.)
@@ -277,6 +280,12 @@ scrape_tweets <- function(
 #' @description Given a start and end date, function looks for tweet ID files already to disk
 #'    and gets tweet IDs for the remaining date range(s) by calling \link{scrape_tweets}.
 #'
+#' @section WARNING:
+#' \itemize{
+#'     \item Function presuposses an active remote Selenium driver.     
+#'     \item Function only accepts dates in format '\%Y-\%m-\%d' (Year-month-day: 'YYYY-mm-dd')     
+#' }
+#' 
 #' @param screen.name is the screen (or account) name of a twitter user
 #' 
 #' @param user.id is the user ID of a twitter user
