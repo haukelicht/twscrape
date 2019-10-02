@@ -61,7 +61,7 @@ scroll_more_tweets <- function(account, remdr, max.scrolls = 30L, sleep = .5){
   return(ids)
 }
 
-#' Scrape Tweets from screen
+#' Scrape Tweets IDs from screen
 #' 
 #' @description Given a twitter account screen name or ID, and start and end dates, 
 #'      function screen-scrapes IDs of historical tweets in time range and returns them
@@ -116,7 +116,7 @@ scroll_more_tweets <- function(account, remdr, max.scrolls = 30L, sleep = .5){
 #' @importFrom purrr map2 map2_dfr set_names
 #' @importFrom tidyr separate
 #' @importFrom jsonlite toJSON write_json
-scrape_tweets <- function(
+scrape_tweet_ids <- function(
   tw.account
   , remdr
   , since.date
@@ -314,7 +314,17 @@ scrape_tweets <- function(
 #'
 #' @param verbose logical. Print out status messages?
 #' 
-#' @return
+#' @return A \code{\link[tibble]{tibble}} data frame.
+#'      The data frame is empty if an error occurs or no tweet IDs were scraped in the given time range.
+#'      Otherwise it has columns 
+#'      \enumerate{
+#'           \item 'screen_name' (<chr>, as passed to argument \code{screen.name}),
+#'           \item 'since' (<date>, as returned by interval-specific calls to \link{scrape_tweet_ids}),
+#'           \item 'until' (<date>, as returned by interval-specific calls to \link{scrape_tweet_ids}),
+#'           \item 'tweet_id' (<chr>) and
+#'           \item 'user_id' (<chr>, as passed to argument \code{user.id})
+#'      }
+#'      , and one row is one tweet.
 #' 
 #' @importFrom purrr map_int
 #' @importFrom lubridate ymd
@@ -386,7 +396,7 @@ get_user_tweet_ids_in_date_range <- function(
     
     # try scrape tweet IDs from screen
     tweet_ids <- tryCatch(
-      scrape_tweets_from_screen(
+      scrape_tweet_ids(
         tw.account = screen.name
         , remdr = remdr
         , since.date = req_date_ranges[[dr]][1]

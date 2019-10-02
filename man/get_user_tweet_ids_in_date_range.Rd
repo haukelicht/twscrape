@@ -39,7 +39,17 @@ Used both for looking for existing tweet ID JSON files, and to name new ones whe
 \item{verbose}{logical. Print out status messages?}
 }
 \value{
-
+A \code{\link[tibble]{tibble}} data frame.
+     The data frame is empty if an error occurs or no tweet IDs were scraped in the given time range.
+     Otherwise it has columns 
+     \enumerate{
+          \item 'screen_name' (<chr>, as passed to argument \code{screen.name}),
+          \item 'since' (<date>, as returned by interval-specific calls to \link{scrape_tweet_ids}),
+          \item 'until' (<date>, as returned by interval-specific calls to \link{scrape_tweet_ids}),
+          \item 'tweet_id' (<chr>) and
+          \item 'user_id' (<chr>, as passed to argument \code{user.id})
+     }
+     , and one row is one tweet.
 }
 \description{
 Given a start and end date, function looks for tweet ID files already to disk
