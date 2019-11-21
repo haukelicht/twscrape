@@ -5,17 +5,19 @@
 \title{Scrape Tweets IDs from screen}
 \usage{
 scrape_tweet_ids(tw.account, remdr, since.date, until.date,
-  date.interval = "month", write.out = TRUE, write.out.path,
+  date.interval = "month", max.tweets.pi = 10000, write.out = TRUE,
+  write.out.path,
   write.out.name = sprintf("tw_user_\%s_tweet_ids_\%s.json", tw.account,
-  paste0(since.date, "_to_", until.date)), sleep = 0.5, verbose = TRUE)
+  paste0(since.date, "_to_", until.date)), sleep = 0.5,
+  .scroll.sleep = 0.75, verbose = TRUE)
 }
 \arguments{
 \item{tw.account}{a scalar character vector, specifying a Twitter screen name or account ID}
 
-\item{remdr}{an \bold{active} RSelenium \code{\link[RSelenium]{remoteDriver}} object 
+\item{remdr}{an \bold{active} RSelenium \code{\link[RSelenium]{remoteDriver}} object
 (check \code{remdr$getStatus()} to see if the driver is running.)}
 
-\item{since.date}{create date of oldest tweets to get 
+\item{since.date}{create date of oldest tweets to get
 Only accepts dates in format '\%Y-\%m-\%d' (Year-month-day: 'YYYY-mm-dd')}
 
 \item{until.date}{create date of most recent (youngest) tweets to get
@@ -23,8 +25,11 @@ Only accepts dates in format '\%Y-\%m-\%d' (Year-month-day: 'YYYY-mm-dd')}
 
 \item{date.interval}{date interval passed to 'by' argument of \code{\link[base]{seq.Date}}. Defaults to 'month'.}
 
+\item{max.tweets.pi}{maximum nuber of tweets per intevall to load.
+Defaults to 10'000. (See Dtails section)}
+
 \item{write.out}{logical. write out tweet IDs as JSON to disk?
-If \code{TRUE} (the default), JSON file will be written 
+If \code{TRUE} (the default), JSON file will be written
 to path \code{write.out.path} and named \code{write.out.name}.
 If \code{FALSE}, \code{write.out.path} and \code{write.out.name} will be ignored.}
 
@@ -32,32 +37,49 @@ If \code{FALSE}, \code{write.out.path} and \code{write.out.name} will be ignored
 Will be ignored if \code{write.out = FALSE}}
 
 \item{write.out.name}{JSON file name.
-Defaults to 'tw_user_<\code{tw.account}>_tweet_ids_<\code{since.date}>_to_<\code{until.date}>.json' 
+Defaults to 'tw_user_<\code{tw.account}>_tweet_ids_<\code{since.date}>_to_<\code{until.date}>.json'
 Will be ignored if \code{write.out = FALSE}}
 
-\item{sleep}{Seconds to pause between date ranges when iterating over date intervals defined by 
+\item{sleep}{Seconds to pause between date ranges when iterating over date intervals defined by
 \code{since.date}, \code{until.date} and \code{date.interval}.
-Defautls to .5}
+Defaults to .5 seconds}
+
+\item{.scroll.sleep}{Seconds to pause between scrolls when scrolling for more tweets. Defautls to .75 seconds.
+(See section 'scroll sleep' for details.)}
 
 \item{verbose}{logical. Print out status messages?}
 }
 \value{
 A \code{\link[tibble]{tibble}} data frame.
      The data frame is empty if an error occurs or no tweet IDs were scraped in the given time range.
-     Otherwise it has columns 'account' (<chr>), 'since' (<date>), 'until' (<date>) and 'tweet_id' (<chr>), 
+     Otherwise it has columns 'account' (<chr>), 'since' (<date>), 'until' (<date>) and 'tweet_id' (<chr>),
      and one row is one tweet.
 }
 \description{
-Given a twitter account screen name or ID, and start and end dates, 
+Given a twitter account screen name or ID, and start and end dates,
      function screen-scrapes IDs of historical tweets in time range and returns them
      in a data frame.
      Optionally, the scraped IDs can additionally be written to disk (if \code{write.out = TRUE}).
 }
+\details{
+Note that the maximum number of tweets loaded per date interval (\code{max.tweets.pi}) needs to be adapted to the date interval.
+    Per scroll, 20 new tweets are loaded.
+    By default, there comes a pause of .75 seconds between scrolls.
+    This means that at maximum, waiting for 10'000 tweets to load takes \eqn{((10000/20) * .75)/60 = 6.25} minutes.
+}
+\section{Scroll sleep}{
+
+   Argument \code{.scroll.sleep} determines how much the Twitter timeline has to fully load.
+   \bold{WARNING}: Setting low values (<.75 seconds) endangers not getting all tweet IDs,
+   as the scraping process can be aborted prematurely due to too little scroll sleep.
+   The default setting of .75 seconds is a minumum with fast internet connection.
+}
+
 \section{WARNING}{
 
 \itemize{
-    \item Function presuposses an active remote Selenium driver.     
-    \item Function only accepts dates in format '\%Y-\%m-\%d' (Year-month-day: 'YYYY-mm-dd')     
+    \item Function presuposses an active remote Selenium driver.
+    \item Function only accepts dates in format '\%Y-\%m-\%d' (Year-month-day: 'YYYY-mm-dd')
 }
 }
 

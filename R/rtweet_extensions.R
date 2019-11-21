@@ -36,21 +36,30 @@ get_api_request_limits <- function(
 #' @description Function gets all statuses by ID
 #'
 #' @param status.ids vector of twitter status IDs
+#'
+#' @param token an Twitter OAuth \code{rtweet}'s 'Token' object.
+#'     Defaults to \code{rtweet}'s \code{get_token}.
+#'
 #' @param batch.size Number of statuses to request per iteration.
+#'
 #'      Passed to \code{rtweet}'s \link[rtweet]{lookup_statuses} .
 #'      Defaults to 90000 (the maximum value).
+#'
 #' @param order.ids logical. Order IDs in ascending order?
-#'      Defaults to \code{TRUE}
+#'      Defaults to \code{TRUE}.
+#'
 #' @param verbose logical. print status messages?
 #'
 #' @importFrom tibble enframe
 #' @import dplyr
-#' @importFrom rtweet lookup_statuses
+#' @importFrom rtweet get_token lookup_statuses
 #'
-#' @return
+#' @return A data frame
+#'
 #' @export
 get_all_tweets <- function(
   status.ids
+  , token = rtweet::get_token()
   , batch.size = 90000L
   , order.ids = TRUE
   , verbose = TRUE

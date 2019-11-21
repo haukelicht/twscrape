@@ -4,20 +4,27 @@
 \alias{get_all_tweets}
 \title{Get all tweets}
 \usage{
-get_all_tweets(status.ids, batch.size = 90000L, order.ids = TRUE,
-  verbose = TRUE)
+get_all_tweets(status.ids, token = rtweet::get_token(),
+  batch.size = 90000L, order.ids = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{status.ids}{vector of twitter status IDs}
 
+\item{token}{an Twitter OAuth \code{rtweet}'s 'Token' object.
+Defaults to \code{rtweet}'s \code{get_token}.}
+
 \item{batch.size}{Number of statuses to request per iteration.
-Passed to \code{rtweet}'s \link[rtweet]{lookup_statuses} .
-Defaults to 90000 (the maximum value).}
+
+     Passed to \code{rtweet}'s \link[rtweet]{lookup_statuses} .
+     Defaults to 90000 (the maximum value).}
 
 \item{order.ids}{logical. Order IDs in ascending order?
-Defaults to \code{TRUE}}
+Defaults to \code{TRUE}.}
 
 \item{verbose}{logical. print status messages?}
+}
+\value{
+A data frame
 }
 \description{
 Function gets all statuses by ID

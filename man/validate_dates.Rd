@@ -23,6 +23,8 @@ Function validates format of dates
 }
 \examples{
 \dontrun{
-validate_dates(1234, Sys.Date(), "2019-02-30")
+test_ <- validate_dates(1234, Sys.Date(), "2019-02-30")
+test_
+lapply(test_, class)
 }
 }

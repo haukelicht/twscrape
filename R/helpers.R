@@ -34,6 +34,8 @@ wait_until <- function(until.time, pause.secs = 5) {
 #'      i.e. 'names', 'image', 'container_id', and 'ports' for the default formatting string.
 #'      Each row representes one running container (hence, 0 rows if no container is running).
 #'
+#' @importFrom purrr set_names
+#'
 #' @export
 get_running_dockers <- function(format.string = "table {{.Names}},{{.Image}},{{.ID}},{{.Ports}}"){
 
@@ -54,7 +56,7 @@ get_running_dockers <- function(format.string = "table {{.Names}},{{.Image}},{{.
     stop("docker deamon not running. (Run `open --background -a Docker` in shell or start Docker.app to start deamon.)", call. = FALSE)
 
   stat <- do.call(rbind, strsplit(docker_stat, ","))
-  setNames(as.data.frame(stat)[-1, ], gsub("\\s+", "_", tolower(stat[1, ])))
+  purrr::set_names(as.data.frame(stat)[-1, ], gsub("\\s+", "_", tolower(stat[1, ])))
 }
 
 #' Validate dates
@@ -72,10 +74,12 @@ get_running_dockers <- function(format.string = "table {{.Names}},{{.Image}},{{.
 #'     Elements NA when
 #'
 #' @importFrom stringr str_replace_all
-#' @importFrom lubridate is.Date
+#' @importFrom lubridate is.Date ymd
 #' @examples
 #' \dontrun{
-#' validate_dates(1234, Sys.Date(), "2019-02-30")
+#' test_ <- validate_dates(1234, Sys.Date(), "2019-02-30")
+#' test_
+#' lapply(test_, class)
 #' }
 validate_dates <- function(..., .format = "%Y-%m-%d") {
 
@@ -95,7 +99,7 @@ validate_dates <- function(..., .format = "%Y-%m-%d") {
 
   inl <- list(...)
 
-  lapply(inl, function(e = "2019-02-30") {
+  lapply(inl, function(e) {
 
     if (!(lubridate::is.Date(e) || (is.character(e) & has_ymd_format(e))))
       warning("Problem with input value '", e, "'. (Has not the correct date format/is not a date.)", call. = FALSE)
@@ -107,7 +111,7 @@ validate_dates <- function(..., .format = "%Y-%m-%d") {
       return(NA)
     }
 
-    return(format(e_, .format))
+    return(lubridate::ymd(format(e_, .format)))
   })
 }
 

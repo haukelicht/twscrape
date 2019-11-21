@@ -9,7 +9,7 @@ scroll_more_tweets(account, remdr, max.scrolls = 30L, sleep = 0.5)
 \arguments{
 \item{account}{Twitter screen name or account ID}
 
-\item{remdr}{an \bold{active} RSelenium \code{\link[RSelenium]{remoteDriver}} object 
+\item{remdr}{an \bold{active} RSelenium \code{\link[RSelenium]{remoteDriver}} object
 (check \code{remdr$getStatus()} to see if the driver is running.)}
 
 \item{max.scrolls}{Maximun number of times down-scrolling is tried. Defaults to 30.}
@@ -26,6 +26,14 @@ Function takes remote driver currently at a Twitter users' stream,
      It then extracts all tweet IDs from the HTML source (tag 'div.tweet', attribute 'data-item-id'),
      and returns them as a character vector.
 }
+\section{Scroll sleep}{
+
+   Argument \code{sleep} determines how much the Twitter timeline has to fully load.
+   \bold{WARNING}: Setting low values (<.75 seconds) endangers not getting all tweet IDs,
+   as the scraping process can be aborted prematurely due to too little scroll sleep.
+   The default setting of .75 seconds is a minumum with fast internet connection.
+}
+
 \section{WARNING}{
 
     Function presuposses an active remote Selenium driver.
