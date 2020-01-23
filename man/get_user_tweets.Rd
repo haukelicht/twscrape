@@ -5,8 +5,7 @@
 \title{Get a user's tweets for a given date range}
 \usage{
 get_user_tweets(ids.file, user.id, since, until,
-  token = rtweet::get_token(), .write.out = TRUE,
-  .data.path = "/Users/licht/Dropbox/smdata/sink/candidates/at/tweets/",
+  token = rtweet::get_token(), .write.out = TRUE, .data.path,
   .file.stem = paste0("tw_user_", user.id, "_tweets_\%s.RData"),
   .write.fun = saveRDS, verbose = TRUE)
 }
